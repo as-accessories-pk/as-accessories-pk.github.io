@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Shop stylish men's watches, women's watches and smartwatches at Time Zone.">
+  <title>Time Zone | Your Time, Our Passion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topbar"><span>🚚 Free delivery across Pakistan</span><span>✦ Quality you can trust</span><span>☎ Need help? <b id="topPhone">Set your WhatsApp number</b></span></div>
+  <header class="header">
+    <a class="brand" href="#home" aria-label="Time Zone home"><span class="brand-clock">◷</span><span><strong>TIME ZONE</strong><small>YOUR TIME · OUR PASSION</small></span></a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+    <nav id="nav"><a href="#home">Home</a><a href="#collections" data-filter-link="Men">Men's Watches</a><a href="#collections" data-filter-link="Women">Women's Watches</a><a href="#collections" data-filter-link="Smartwatch">Smartwatches</a><a href="#products" data-filter-link="All">All Products</a><a href="#about">About Us</a></nav>
+    <button class="icon-btn" id="searchToggle" aria-label="Search">⌕</button><button class="cart-btn" id="cartToggle" aria-label="Open cart">🛒 <span id="cartCount">0</span></button>
+  </header>
+  <main>
+    <section class="hero" id="home"><div class="hero-copy"><p class="eyebrow">PREMIUM WATCH COLLECTION</p><h1>Style Meets<br><em>Timelessness</em></h1><p>Explore our collection of men's watches, women's watches and smartwatches. Find the perfect watch for every moment.</p><a class="gold-btn" href="#products">Shop Now <span>→</span></a><div class="hero-note">TIMELESS DESIGN · EVERYDAY CONFIDENCE</div></div><div class="hero-photo" role="img" aria-label="Luxury wristwatch close-up"></div></section>
+    <section class="benefits" id="about"><div><span class="benefit-icon">◇</span><p><b>Quality Products</b><small>Carefully selected styles</small></p></div><div><span class="benefit-icon">♧</span><p><b>Delivery Across Pakistan</b><small>Convenient doorstep delivery</small></p></div><div><span class="benefit-icon">↻</span><p><b>Customer Support</b><small>Help when you need it</small></p></div><div><span class="benefit-icon">☏</span><p><b>WhatsApp Ordering</b><small>Quick and easy orders</small></p></div></section>
+    <section class="section" id="collections"><div class="section-heading"><div><p class="eyebrow">FIND YOUR STYLE</p><h2>Shop by Collection</h2></div><p>Styles for every wrist and every occasion.</p></div><div class="category-grid">
+      <button class="category-card men" data-filter="Men"><span>01 / COLLECTION</span><strong>MEN'S WATCHES</strong><small>Explore collection →</small></button>
+      <button class="category-card women" data-filter="Women"><span>02 / COLLECTION</span><strong>WOMEN'S WATCHES</strong><small>Explore collection →</small></button>
+      <button class="category-card smart" data-filter="Smartwatch"><span>03 / COLLECTION</span><strong>SMARTWATCHES</strong><small>Explore collection →</small></button>
+      <button class="category-card all" data-filter="All"><span>04 / COLLECTION</span><strong>ALL COLLECTIONS</strong><small>View all →</small></button>
+    </div></section>
+    <section class="section products-section" id="products"><div class="section-heading"><div><p class="eyebrow">HANDPICKED FOR YOU</p><h2>Featured Products</h2></div><div class="product-tools"><input id="searchInput" type="search" placeholder="Search watches..." aria-label="Search watches"><select id="sortSelect" aria-label="Sort products"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option></select></div></div><div class="filter-row" id="filterRow"><button class="filter active" data-filter="All">All Watches</button><button class="filter" data-filter="Men">Men</button><button class="filter" data-filter="Women">Women</button><button class="filter" data-filter="Smartwatch">Smartwatches</button></div><div class="product-grid" id="productGrid"></div><p class="empty-state" id="emptyState" hidden>No watches match your search. Try another term.</p></section>
+    <section class="newsletter"><div class="newsletter-watch" aria-hidden="true"></div><div class="newsletter-copy"><p class="eyebrow">STAY IN THE LOOP</p><h2>Good Things Take Time.</h2><p>Sign up for new arrivals, special offers and style inspiration.</p><form id="newsletterForm"><input type="email" id="emailInput" placeholder="Your email address" required><button class="gold-btn" type="submit">Subscribe</button></form><small id="newsletterMsg" aria-live="polite"></small></div><div class="whatsapp-box"><p class="eyebrow">NEED A HAND?</p><h3>Order on WhatsApp</h3><p>Questions about a watch? Message us and we'll help you choose.</p><button class="outline-btn" id="whatsappBtn">☏ Chat with us <span>↗</span></button></div></section>
+  </main>
+  <footer><a class="footer-brand" href="#home">TIME ZONE</a><p>Your time. Your style. Your story.</p><div><a href="#products">Shop</a><a href="#collections">Collections</a><a href="#about">Customer care</a></div><small>© <span id="year"></span> Time Zone. All rights reserved.</small></footer>
+  <div class="overlay" id="overlay"></div><aside class="cart-drawer" id="cartDrawer" aria-label="Shopping cart" aria-hidden="true"><div class="drawer-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Your Cart (<span id="drawerCount">0</span>)</h2></div><button class="close-btn" id="closeCart" aria-label="Close cart">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-footer"><div class="total-line"><span>Subtotal</span><strong id="cartTotal">Rs. 0</strong></div><button class="gold-btn full" id="checkoutBtn">Order via WhatsApp →</button><small>Delivery charges, if any, can be confirmed before dispatch.</small></div></aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body></html>
