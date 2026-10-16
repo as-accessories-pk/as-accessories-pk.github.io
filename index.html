@@ -21,6 +21,28 @@
       .brand.as-brand .as-name{font-size:19px}
       .brand.as-brand .as-tag{font-size:8px;letter-spacing:1.4px}
     }
+
+    /* Checkout / delivery details popup */
+    .as-modal{--as-gold:#b8893b;display:none;position:fixed;inset:0;z-index:10000;background:rgba(15,15,15,.55);align-items:center;justify-content:center;padding:14px}
+    .as-modal.open{display:flex}
+    .as-modal-card{position:relative;width:100%;max-width:470px;max-height:94vh;overflow-y:auto;background:#fff;color:#1d1d1d;border-radius:10px;padding:26px 24px 22px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+    .as-modal-card h2{margin:0 0 4px;font-family:"Playfair Display",Georgia,serif;font-size:26px;font-weight:600}
+    .as-modal-sub{margin:0 0 14px;font-size:13.5px;color:#666;line-height:1.5}
+    .as-modal-close{position:absolute;top:10px;right:12px;width:36px;height:36px;border:0;background:transparent;font-size:28px;line-height:1;color:#555;cursor:pointer}
+    .as-summary{margin:0 0 16px;padding:12px 14px;background:#f7f4ee;border-radius:8px;font-size:13.5px}
+    .as-summary div{display:flex;justify-content:space-between;gap:14px;padding:3px 0}
+    .as-summary .as-sum-total{margin-top:6px;padding-top:8px;border-top:1px solid #e3dccd;font-weight:700}
+    .as-field{display:block;margin-bottom:12px}
+    .as-field>span{display:block;margin-bottom:5px;font-size:12.5px;font-weight:600;color:#444}
+    .as-field em{font-style:normal;font-weight:400;color:#888}
+    .as-field input,.as-field textarea{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #d6d0c4;border-radius:6px;background:#fff;color:#1d1d1d;font:inherit;font-size:16px}
+    .as-field textarea{min-height:76px;resize:vertical}
+    .as-field input:focus,.as-field textarea:focus{outline:2px solid var(--as-gold);outline-offset:0;border-color:var(--as-gold)}
+    .as-send-to{margin:4px 0 14px;padding:0;border:0}
+    .as-send-to legend{padding:0;margin-bottom:6px;font-size:12.5px;font-weight:600;color:#444}
+    .as-send-to label{display:flex;align-items:center;gap:8px;padding:7px 0;font-size:14px;cursor:pointer}
+    .as-error{min-height:18px;margin:0 0 8px;font-size:13px;color:#b3261e}
+    .as-modal-note{margin:10px 0 0;text-align:center;font-size:12px;color:#777}
   </style>
 </head>
 <body>
@@ -45,6 +67,29 @@
   </main>
   <footer><a class="footer-brand as-footer-brand" href="#home">AS ACCESSORIES</a><p>Your time. Your style. Your story.</p><div><a href="#products">Shop</a><a href="#collections">Collections</a><a href="#about">Customer care</a></div><small>© <span id="year"></span> AS Accessories. All rights reserved.</small></footer>
   <div class="overlay" id="overlay"></div><aside class="cart-drawer" id="cartDrawer" aria-label="Shopping cart" aria-hidden="true"><div class="drawer-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Your Cart (<span id="drawerCount">0</span>)</h2></div><button class="close-btn" id="closeCart" aria-label="Close cart">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-footer"><div class="total-line"><span>Subtotal</span><strong id="cartTotal">Rs. 0</strong></div><button class="gold-btn full" id="checkoutBtn">Order via WhatsApp →</button><small>Delivery charges, if any, can be confirmed before dispatch.</small></div></aside>
+  <div class="as-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+    <div class="as-modal-card">
+      <button type="button" class="as-modal-close" id="closeCheckout" aria-label="Close">×</button>
+      <h2 id="checkoutTitle">Delivery Details</h2>
+      <p class="as-modal-sub">Fill in your details and your complete order will be sent to us on WhatsApp.</p>
+      <div class="as-summary" id="checkoutSummary"></div>
+      <form id="checkoutForm">
+        <label class="as-field"><span>Full name</span><input id="custName" type="text" autocomplete="name" required></label>
+        <label class="as-field"><span>Phone number</span><input id="custPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0300 1234567" required></label>
+        <label class="as-field"><span>City</span><input id="custCity" type="text" list="cityList" autocomplete="address-level2" required></label>
+        <datalist id="cityList"><option value="Lahore"><option value="Karachi"><option value="Islamabad"><option value="Rawalpindi"><option value="Faisalabad"><option value="Multan"><option value="Gujranwala"><option value="Sialkot"><option value="Peshawar"><option value="Hyderabad"><option value="Quetta"></datalist>
+        <label class="as-field"><span>Complete delivery address</span><textarea id="custAddress" autocomplete="street-address" placeholder="House / street / area / landmark" required></textarea></label>
+        <label class="as-field"><span>Notes <em>(optional)</em></span><input id="custNotes" type="text" placeholder="Colour, timing, anything we should know"></label>
+        <fieldset class="as-send-to"><legend>Send order to</legend>
+          <label><input type="radio" name="waNumber" value="0" checked> +92 301 7065486</label>
+          <label><input type="radio" name="waNumber" value="1"> +92 305 1563579</label>
+        </fieldset>
+        <p class="as-error" id="checkoutError" role="alert"></p>
+        <button class="gold-btn full" type="submit">Send Order on WhatsApp →</button>
+        <p class="as-modal-note">WhatsApp will open with your order ready to send.</p>
+      </form>
+    </div>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>

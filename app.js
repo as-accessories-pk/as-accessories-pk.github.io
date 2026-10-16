@@ -227,24 +227,103 @@ function openWhatsAppMessage(message) {
   if (number) window.open(whatsappUrl(number, message), '_blank', 'noopener');
 }
 
-function orderCart() {
-  if (!cart.length) {
+const CUSTOMER_KEY = 'as_customer_v1';
+
+function cartSummary() {
+  const rows = cart.map(item => {
+    const p = products.find(product => product.id === item.id);
+    return p ? { name: p.name, qty: item.qty, line: p.price * item.qty } : null;
+  }).filter(Boolean);
+  const total = rows.reduce((sum, r) => sum + r.line, 0);
+  return { rows, total };
+}
+
+function loadCustomer() {
+  try { return JSON.parse(localStorage.getItem(CUSTOMER_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+
+function saveCustomer(d) {
+  try {
+    localStorage.setItem(CUSTOMER_KEY, JSON.stringify({
+      name: d.name, phone: d.phone, city: d.city, address: d.address
+    }));
+  } catch (e) {}
+}
+
+function openCheckout() {
+  const { rows, total } = cartSummary();
+  if (!rows.length) {
     toast('Your cart is empty');
     return;
   }
 
-  const lines = cart.map(item => {
-    const p = products.find(product => product.id === item.id);
-    return p ? `• ${p.name} x${item.qty} — ${money(p.price * item.qty)}` : '';
-  }).filter(Boolean).join('\n');
+  $('#checkoutSummary').innerHTML =
+    rows.map(r => `<div><span>${escapeHTML(r.name)} × ${r.qty}</span><span>${money(r.line)}</span></div>`).join('') +
+    `<div class="as-sum-total"><span>Subtotal</span><span>${money(total)}</span></div>`;
 
-  const total = cart.reduce((sum, item) => {
-    const p = products.find(product => product.id === item.id);
-    return sum + (p ? item.qty * p.price : 0);
-  }, 0);
+  const saved = loadCustomer();
+  const fields = { custName: 'name', custPhone: 'phone', custCity: 'city', custAddress: 'address' };
+  Object.keys(fields).forEach(id => {
+    const el = $('#' + id);
+    if (!el.value) el.value = saved[fields[id]] || '';
+  });
 
-  const message = `Hello AS Accessories! I'd like to place an order:\n\n${lines}\n\nSubtotal: ${money(total)}\n\nPlease confirm availability, delivery charges and payment options.\nName:\nDelivery address:`;
-  openWhatsAppMessage(message);
+  $('#checkoutError').textContent = '';
+  $('#checkoutModal').classList.add('open');
+  $('#custName').focus();
+}
+
+function closeCheckout() {
+  $('#checkoutModal').classList.remove('open');
+}
+
+function buildOrderMessage(d) {
+  const { rows, total } = cartSummary();
+  const lines = rows.map(r => `• ${r.name} x${r.qty} — ${money(r.line)}`).join('\n');
+
+  return `Hello AS Accessories! I'd like to place an order:\n\n${lines}\n\nSubtotal: ${money(total)}\n\n` +
+    `*Delivery details*\nName: ${d.name}\nPhone: ${d.phone}\nCity: ${d.city}\nAddress: ${d.address}` +
+    (d.notes ? `\nNotes: ${d.notes}` : '') +
+    `\n\nPlease confirm availability, delivery charges and payment options.`;
+}
+
+function submitOrder(event) {
+  event.preventDefault();
+
+  const d = {
+    name: $('#custName').value.trim(),
+    phone: $('#custPhone').value.trim(),
+    city: $('#custCity').value.trim(),
+    address: $('#custAddress').value.trim(),
+    notes: $('#custNotes').value.trim()
+  };
+
+  const digits = d.phone.replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 13) {
+    $('#checkoutError').textContent = 'Please enter a valid phone number, e.g. 0300 1234567.';
+    $('#custPhone').focus();
+    return;
+  }
+  if (d.address.length < 8) {
+    $('#checkoutError').textContent = 'Please enter your complete delivery address.';
+    $('#custAddress').focus();
+    return;
+  }
+  if (!cartSummary().rows.length) {
+    closeCheckout();
+    toast('Your cart is empty');
+    return;
+  }
+
+  const picked = document.querySelector('input[name="waNumber"]:checked');
+  const number = WHATSAPP_NUMBERS[picked ? Number(picked.value) : 0] || WHATSAPP_NUMBERS[0];
+
+  window.open(whatsappUrl(number, buildOrderMessage(d)), '_blank', 'noopener');
+  saveCustomer(d);
+  closeCheckout();
+  closeCart();
+  toast('Opening WhatsApp…');
 }
 
 document.addEventListener('click', event => {
@@ -275,7 +354,15 @@ document.addEventListener('click', event => {
 $('#cartToggle').addEventListener('click', openCart);
 $('#closeCart').addEventListener('click', closeCart);
 $('#overlay').addEventListener('click', closeCart);
-$('#checkoutBtn').addEventListener('click', orderCart);
+$('#checkoutBtn').addEventListener('click', openCheckout);
+$('#checkoutForm').addEventListener('submit', submitOrder);
+$('#closeCheckout').addEventListener('click', closeCheckout);
+$('#checkoutModal').addEventListener('click', event => {
+  if (event.target === $('#checkoutModal')) closeCheckout();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') closeCheckout();
+});
 $('#searchToggle').addEventListener('click', () => {
   $('#searchInput').focus();
   $('#products').scrollIntoView({behavior:'smooth'});
