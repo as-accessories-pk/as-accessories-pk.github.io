@@ -1,5 +1,5 @@
 
-/* Time Zone — Supabase + WhatsApp Store */
+/* AS Accessories — Supabase + WhatsApp Store */
 
 const WHATSAPP_NUMBERS = ['923017065486', '923051563579'];
 
@@ -51,7 +51,7 @@ function normalizeProduct(p) {
     name: p.name || 'Watch',
     category: p.category || 'Men',
     price: Number(p.price) || 0,
-    tag: p.tag || 'TIME ZONE',
+    tag: p.tag || 'AS ACCESSORIES',
     image: p.image_url || p.image || '',
     desc: p.description || p.desc || ''
   };
@@ -243,7 +243,7 @@ function orderCart() {
     return sum + (p ? item.qty * p.price : 0);
   }, 0);
 
-  const message = `Hello Time Zone! I'd like to place an order:\n\n${lines}\n\nSubtotal: ${money(total)}\n\nPlease confirm availability, delivery charges and payment options.\nName:\nDelivery address:`;
+  const message = `Hello AS Accessories! I'd like to place an order:\n\n${lines}\n\nSubtotal: ${money(total)}\n\nPlease confirm availability, delivery charges and payment options.\nName:\nDelivery address:`;
   openWhatsAppMessage(message);
 }
 
@@ -285,7 +285,7 @@ $('#sortSelect').addEventListener('change', renderProducts);
 $('#menuToggle').addEventListener('click', () => $('#nav').classList.toggle('open'));
 
 $('#whatsappBtn').addEventListener('click', () =>
-  openWhatsAppMessage('Hello Time Zone! I would like to ask about your watches.')
+  openWhatsAppMessage('Hello AS Accessories! I would like to ask about your watches.')
 );
 
 $('#newsletterForm').addEventListener('submit', event => {
