@@ -46,13 +46,18 @@ function escapeHTML(value) {
 }
 
 function normalizeProduct(p) {
+  const images = [p.image_url || p.image, p.image_url_2, p.image_url_3, p.image_url_4]
+    .map(u => String(u || '').trim())
+    .filter(Boolean);
+
   return {
     id: String(p.id),
     name: p.name || 'Watch',
     category: p.category || 'Men',
     price: Number(p.price) || 0,
     tag: p.tag || 'AS ACCESSORIES',
-    image: p.image_url || p.image || '',
+    image: images[0] || '',
+    images,
     desc: p.description || p.desc || ''
   };
 }
@@ -80,23 +85,30 @@ async function loadSupabaseProducts() {
 
     renderProducts();
     renderCart();
+    productsReady = true;
+    route();
   } catch (error) {
     console.error('Could not load Supabase products:', error.message);
     products = loadLocalProducts();
     renderProducts();
     renderCart();
+    productsReady = true;
+    route();
     toast('Showing saved products; online loading failed.');
   }
 }
 
 function productCard(p) {
+  const href = '#product/' + encodeURIComponent(p.id);
   return `<article class="product-card">
-    <div class="product-image">
-      <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.name)}" loading="lazy">
-      <span class="tag">${escapeHTML(p.tag)}</span>
-    </div>
+    <a class="product-link img-link" href="${href}" aria-label="View ${escapeHTML(p.name)}">
+      <div class="product-image">
+        <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.name)}" loading="lazy">
+        <span class="tag">${escapeHTML(p.tag)}</span>
+      </div>
+    </a>
     <div class="product-info">
-      <h3>${escapeHTML(p.name)}</h3>
+      <h3><a class="product-link" href="${href}">${escapeHTML(p.name)}</a></h3>
       <p>${escapeHTML(p.desc)}</p>
       <div class="price">${money(p.price)}</div>
       <button class="add-btn" data-add="${escapeHTML(p.id)}">＋ Add to Cart</button>
@@ -136,16 +148,16 @@ function toast(message) {
   toast.timer = setTimeout(() => el.classList.remove('show'), 2300);
 }
 
-function addToCart(id) {
+function addToCart(id, qty = 1, silent = false) {
   id = String(id);
   if (!products.some(p => p.id === id)) return;
 
   const item = cart.find(x => x.id === id);
-  if (item) item.qty++;
-  else cart.push({id, qty:1});
+  if (item) item.qty += qty;
+  else cart.push({id, qty});
 
   renderCart();
-  toast('Added to your cart');
+  if (!silent) toast('Added to your cart');
 }
 
 function changeQty(id, delta) {
@@ -326,6 +338,185 @@ function submitOrder(event) {
   toast('Opening WhatsApp…');
 }
 
+/* ---------- Product page (#product/ID) ---------- */
+const BASE_TITLE = document.title;
+let productsReady = !supabaseClient;
+let ppQty = 1;
+let ppShownId = null;
+let wasProductPage = false;
+let listScrollY = 0;
+let ppImgIndex = 0;
+
+function productImages(p) {
+  if (p.images && p.images.length) return p.images;
+  return p.image ? [p.image] : [];
+}
+
+function showPPImage(p, i) {
+  const imgs = productImages(p);
+  if (!imgs.length) return;
+  ppImgIndex = ((i % imgs.length) + imgs.length) % imgs.length;
+  const img = $('#ppImage');
+  img.src = imgs[ppImgIndex];
+  img.alt = imgs.length > 1 ? `${p.name} - photo ${ppImgIndex + 1}` : p.name;
+  document.querySelectorAll('#ppThumbs button').forEach((b, k) =>
+    b.classList.toggle('active', k === ppImgIndex)
+  );
+}
+
+function currentProductId() {
+  const m = location.hash.match(/^#product\/(.+)$/);
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+}
+
+function productUrl(p) {
+  return location.origin + location.pathname + '#product/' + encodeURIComponent(p.id);
+}
+
+function setPPQty(n) {
+  ppQty = Math.max(1, Math.min(10, n));
+  $('#ppQty').textContent = ppQty;
+}
+
+function renderProductPage(id) {
+  const p = products.find(x => x.id === id);
+  const body = $('#ppBody');
+  const missing = $('#ppMissing');
+
+  if (!p) {
+    body.hidden = true;
+    missing.hidden = false;
+    $('#ppMissingText').textContent = productsReady
+      ? 'Sorry, this product is not available any more.'
+      : 'Loading product…';
+    document.title = BASE_TITLE;
+    ppShownId = null;
+    return;
+  }
+
+  body.hidden = false;
+  missing.hidden = true;
+
+  if (ppShownId !== p.id) {
+    ppImgIndex = 0;
+    setPPQty(1);
+    window.scrollTo(0, 0);
+    ppShownId = p.id;
+  }
+
+  const imgs = productImages(p);
+  if (ppImgIndex >= imgs.length) ppImgIndex = 0;
+  $('#ppThumbs').innerHTML = imgs.length > 1
+    ? imgs.map((src, k) => `<button type="button" data-pp-img="${k}" aria-label="Photo ${k + 1}"><img src="${escapeHTML(src)}" alt="" loading="lazy"></button>`).join('')
+    : '';
+  $('#ppThumbs').hidden = imgs.length < 2;
+  $('#ppPrev').hidden = imgs.length < 2;
+  $('#ppNext').hidden = imgs.length < 2;
+  showPPImage(p, ppImgIndex);
+  $('#ppTag').textContent = p.tag;
+  $('#ppCategory').textContent = p.category;
+  $('#ppName').textContent = p.name;
+  $('#ppPrice').textContent = money(p.price);
+  $('#ppDesc').textContent = p.desc;
+
+  const others = products.filter(x => x.id !== p.id);
+  const related = others.filter(x => x.category === p.category)
+    .concat(others.filter(x => x.category !== p.category))
+    .slice(0, 4);
+  $('#ppRelated').innerHTML = related.map(productCard).join('');
+  $('#ppRelatedWrap').hidden = related.length === 0;
+
+  document.title = `${p.name} | AS Accessories`;
+}
+
+function route() {
+  const id = currentProductId();
+  const page = $('#productPage');
+  const main = document.querySelector('main');
+
+  if (id !== null) {
+    if (!wasProductPage) listScrollY = window.scrollY;
+    wasProductPage = true;
+    main.hidden = true;
+    page.hidden = false;
+    renderProductPage(id);
+    return;
+  }
+
+  page.hidden = true;
+  main.hidden = false;
+  document.title = BASE_TITLE;
+  ppShownId = null;
+
+  if (wasProductPage) {
+    wasProductPage = false;
+    const target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+    if (target) target.scrollIntoView();
+    else window.scrollTo(0, listScrollY);
+  }
+}
+
+async function shareProduct(p) {
+  const url = productUrl(p);
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: `${p.name} | AS Accessories`, text: p.name, url });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('Product link copied');
+  } catch (e) {
+    window.prompt('Copy this product link:', url);
+  }
+}
+
+function pagedProduct() {
+  return products.find(x => x.id === currentProductId());
+}
+
+window.addEventListener('hashchange', route);
+$('#ppPrev').addEventListener('click', () => { const p = pagedProduct(); if (p) showPPImage(p, ppImgIndex - 1); });
+$('#ppNext').addEventListener('click', () => { const p = pagedProduct(); if (p) showPPImage(p, ppImgIndex + 1); });
+$('#ppThumbs').addEventListener('click', event => {
+  const btn = event.target.closest('[data-pp-img]');
+  const p = pagedProduct();
+  if (btn && p) showPPImage(p, Number(btn.dataset.ppImg));
+});
+
+let ppTouchX = null;
+$('#ppStage').addEventListener('touchstart', event => {
+  ppTouchX = event.changedTouches[0].clientX;
+}, { passive: true });
+$('#ppStage').addEventListener('touchend', event => {
+  if (ppTouchX === null) return;
+  const dx = event.changedTouches[0].clientX - ppTouchX;
+  ppTouchX = null;
+  const p = pagedProduct();
+  if (p && Math.abs(dx) > 40) showPPImage(p, ppImgIndex + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+$('#ppMinus').addEventListener('click', () => setPPQty(ppQty - 1));
+$('#ppPlus').addEventListener('click', () => setPPQty(ppQty + 1));
+$('#ppAdd').addEventListener('click', () => {
+  const p = pagedProduct();
+  if (p) { addToCart(p.id, ppQty); }
+});
+$('#ppBuy').addEventListener('click', () => {
+  const p = pagedProduct();
+  if (!p) return;
+  if (!cart.some(item => item.id === p.id)) addToCart(p.id, ppQty, true);
+  openCheckout();
+});
+$('#ppShare').addEventListener('click', () => {
+  const p = pagedProduct();
+  if (p) shareProduct(p);
+});
+
 document.addEventListener('click', event => {
   const add = event.target.closest('[data-add]');
   if (add) addToCart(add.dataset.add);
@@ -364,6 +555,10 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape') closeCheckout();
 });
 $('#searchToggle').addEventListener('click', () => {
+  if (currentProductId() !== null) {
+    location.hash = '#products';
+    route();
+  }
   $('#searchInput').focus();
   $('#products').scrollIntoView({behavior:'smooth'});
 });
@@ -387,4 +582,5 @@ $('#topPhone').textContent = '+92 301 7065486 | +92 305 1563579';
 
 renderProducts();
 renderCart();
+route();
 loadSupabaseProducts();
